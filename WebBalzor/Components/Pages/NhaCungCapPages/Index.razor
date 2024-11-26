@@ -1,0 +1,38 @@
+﻿@page "/nhacungcaps"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Intenr.Models
+@using WebBalzor.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Nhà cung cấp </h1>
+
+<p>
+    <a href="nhacungcaps/create "class="btn btn-primary ">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.NhaCungCap">
+    <PropertyColumn Property="nhacungcap => nhacungcap.Ma_NCC" />
+    <PropertyColumn Property="nhacungcap => nhacungcap.Ten_NCC" />
+    <PropertyColumn Property="nhacungcap => nhacungcap.Ghi_Chu" />
+
+    <TemplateColumn Context="nhacungcap">
+        <a href="@($"nhacungcaps/edit?ma_ncc={nhacungcap.Ma_NCC}")"class="btn btn-info">Edit</a> |
+        <a href="@($"nhacungcaps/details?ma_ncc={nhacungcap.Ma_NCC}")"class="btn btn-success">Details</a> |
+        <a href="@($"nhacungcaps/delete?ma_ncc={nhacungcap.Ma_NCC}")"class="btn btn-success">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private MyAppDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

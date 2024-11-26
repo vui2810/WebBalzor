@@ -1,0 +1,61 @@
+﻿@page "/donvitinhs/create"
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>DonViTinh</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="DonViTinh" OnValidSubmit="AddDonViTinh" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="ten_don_vi_tinh" class="form-label">Ten_Don_Vi_Tinh:</label> 
+                <InputText id="ten_don_vi_tinh" @bind-Value="DonViTinh.Ten_Don_Vi_Tinh" class="form-control" /> 
+                <ValidationMessage For="() => DonViTinh.Ten_Don_Vi_Tinh" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="ghi_chu" class="form-label">Ghi_Chu:</label> 
+                <InputText id="ghi_chu" @bind-Value="DonViTinh.Ghi_Chu" class="form-control" /> 
+                <ValidationMessage For="() => DonViTinh.Ghi_Chu" class="text-danger" /> 
+            </div>        
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                            <div class="text-danger">@errorMessage</div>
+            }
+            <button type="submit" class="btn btn-primary">Create</button> |
+            <a href="/donvitinhs" class="btn btn-outline-secondary">Back to List</a>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private DonViTinh DonViTinh { get; set; } = new();
+    private string errorMessage;
+
+    private async Task AddDonViTinh()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        // Kiểm tra xem tên đơn vị tính đã tồn tại hay chưa (so sánh không phân biệt chữ hoa chữ thường)
+        var existingDonViTinh = await context.DonViTinh
+            .FirstOrDefaultAsync(d => d.Ten_Don_Vi_Tinh.ToLower() == DonViTinh.Ten_Don_Vi_Tinh.ToLower());
+
+        if (existingDonViTinh != null)
+        {
+            // Nếu tên đã tồn tại, thiết lập thông báo lỗi
+            errorMessage = "Tên đơn vị tính đã tồn tại. Vui lòng nhập tên khác.";
+            return; // Không tiếp tục thêm mới
+        }
+
+        // Nếu tên không tồn tại, thêm mới
+        context.DonViTinh.Add(DonViTinh);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/donvitinhs");
+    }
+}

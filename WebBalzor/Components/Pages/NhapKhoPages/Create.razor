@@ -1,0 +1,105 @@
+﻿@page "/nhap-khos/create"
+@inject MyAppDbContext DbContext
+
+<h3>Quản lý Phiếu Nhập Kho</h3>
+
+<div>
+    <input @bind="newNhapKho.So_Phieu_Nhap_Kho" placeholder="Số phiếu nhập" />
+    <input @bind="newNhapKho.Kho_ID" placeholder="Kho ID" type="number" />
+    <input @bind="newNhapKho.NCC_ID" placeholder="NCC ID" type="number" />
+    <input @bind="newNhapKho.Ngay_Nhap_Kho" placeholder="Ngày nhập kho" type="date" />
+    <input @bind="newNhapKho.Ghi_Chu" placeholder="Ghi chú" />
+    <button @onclick="AddNhapKho">Thêm Phiếu Nhập</button>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+            <p style="color:red;">@errorMessage</p>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+            <p style="color:green;">@successMessage</p>
+    }
+</div>
+
+<h4>Danh sách Phiếu Nhập Kho</h4>
+<ul>
+    @foreach (var item in nhapKhos)
+    {
+            <li>
+            @item.So_Phieu_Nhap_Kho - <button @onclick="() => DeleteNhapKho(item.So_Phieu_Nhap_Kho)">Xóa</button>
+            </li>
+    }
+</ul>
+
+@code {
+    private NhapKho newNhapKho = new NhapKho();
+    private List<NhapKho> nhapKhos = new List<NhapKho>();
+    private string errorMessage;
+    private string successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNhapKhos();
+    }
+
+    private async Task LoadNhapKhos()
+    {
+        nhapKhos = await DbContext.DM_Nhap_Kho.ToListAsync();
+    }
+
+    private async Task AddNhapKho()
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        if (string.IsNullOrWhiteSpace(newNhapKho.So_Phieu_Nhap_Kho))
+        {
+            errorMessage = "Số phiếu nhập không được rỗng.";
+            return;
+        }
+
+        if (await DbContext.DM_Nhap_Kho.AnyAsync(x => x.So_Phieu_Nhap_Kho == newNhapKho.So_Phieu_Nhap_Kho))
+        {
+            errorMessage = "Số phiếu nhập đã tồn tại.";
+            return;
+        }
+
+        if (newNhapKho.Kho_ID <= 0)
+        {
+            errorMessage = "Kho không được rỗng.";
+            return;
+        }
+
+        if (newNhapKho.NCC_ID <= 0)
+        {
+            errorMessage = "NCC không được rỗng.";
+            return;
+        }
+
+        if (newNhapKho.Ngay_Nhap_Kho == default(DateTime))
+        {
+            errorMessage = "Ngày nhập kho không được rỗng.";
+            return;
+        }
+
+        DbContext.DM_Nhap_Kho.Add(newNhapKho);
+        await DbContext.SaveChangesAsync();
+        successMessage = "Phiếu nhập kho đã được thêm thành công.";
+
+        // Reset form
+        newNhapKho = new NhapKho();
+        await LoadNhapKhos();
+    }
+
+    private async Task DeleteNhapKho(string soPhieu)
+    {
+        var nhapKhoToRemove = await DbContext.DM_Nhap_Kho.FindAsync(soPhieu);
+        if (nhapKhoToRemove != null)
+        {
+            DbContext.DM_Nhap_Kho.Remove(nhapKhoToRemove);
+            await DbContext.SaveChangesAsync();
+            await LoadNhapKhos();
+        }
+    }
+}

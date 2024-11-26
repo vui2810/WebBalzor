@@ -1,0 +1,63 @@
+﻿@page "/nhacungcaps/create"
+@using Microsoft.EntityFrameworkCore
+@using Intenr.Models
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>NhaCungCap</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+                <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <EditForm method="post" Model="NhaCungCap" OnValidSubmit="AddNhaCungCap" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="ten_ncc" class="form-label">Ten_NCC:</label> 
+                <InputText id="ten_ncc" @bind-Value="NhaCungCap.Ten_NCC" class="form-control" /> 
+                <ValidationMessage For="() => NhaCungCap.Ten_NCC" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="ghi_chu" class="form-label">Ghi_Chu:</label> 
+                <InputText id="ghi_chu" @bind-Value="NhaCungCap.Ghi_Chu" class="form-control" /> 
+                <ValidationMessage For="() => NhaCungCap.Ghi_Chu" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button> |
+            <a href="/nhacungcaps" class="btn btn-outline-secondary">Back to List</a>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private NhaCungCap NhaCungCap { get; set; } = new();
+
+    private string? errorMessage; // Biến để lưu thông báo lỗi
+
+    private async Task AddNhaCungCap()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        // Kiểm tra tên nhà cung cấp đã tồn tại hay chưa
+        var existingNhaCungCap = await context.NhaCungCap
+            .FirstOrDefaultAsync(ncc => ncc.Ten_NCC.ToLower() == NhaCungCap.Ten_NCC.ToLower());
+
+        if (existingNhaCungCap != null)
+        {
+            errorMessage = "Tên nhà cung cấp đã tồn tại. Vui lòng nhập tên khác.";
+            return; // Ngừng thực hiện nếu có lỗi
+        }
+
+        context.NhaCungCap.Add(NhaCungCap);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/nhacungcaps");
+    }
+}

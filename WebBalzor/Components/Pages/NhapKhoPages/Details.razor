@@ -1,0 +1,52 @@
+﻿@page "/nhapkhos/details"
+@using Microsoft.EntityFrameworkCore
+@using WebBalzor.Models
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>NhapKho</h2>
+    <hr />
+    @if (nhapkho is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Kho_ID</dt>
+            <dd class="col-sm-10">@nhapkho.Kho_ID</dd>
+            <dt class="col-sm-2">NCC_ID</dt>
+            <dd class="col-sm-10">@nhapkho.NCC_ID</dd>
+            <dt class="col-sm-2">Ngay_Nhap_Kho</dt>
+            <dd class="col-sm-10">@nhapkho.Ngay_Nhap_Kho</dd>
+            <dt class="col-sm-2">Ghi_Chu</dt>
+            <dd class="col-sm-10">@nhapkho.Ghi_Chu</dd>
+        </dl>
+        <div>
+            <a href="@($"/nhapkhos/edit?so_phieu_nhap_kho={nhapkho.So_Phieu_Nhap_Kho}")">Edit</a> |
+            <a href="@($"/nhapkhos")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private NhapKho? nhapkho;
+
+    [SupplyParameterFromQuery]
+    private string So_Phieu_Nhap_Kho { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        nhapkho = await context.DM_Nhap_Kho.FirstOrDefaultAsync(m => m.So_Phieu_Nhap_Kho == So_Phieu_Nhap_Kho);
+
+        if (nhapkho is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

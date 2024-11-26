@@ -1,0 +1,61 @@
+﻿@page "/dm_khos/create"
+
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>DM_Kho</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+                <div class="alert alert-danger">@errorMessage</div>
+        }
+        <EditForm method="post" Model="DM_Kho" OnValidSubmit="AddDM_Kho" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="ten_kho" class="form-label">Ten_Kho:</label> 
+                <InputText id="ten_kho" @bind-Value="DM_Kho.Ten_Kho" class="form-control" /> 
+                <ValidationMessage For="() => DM_Kho.Ten_Kho" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="ghi_chu" class="form-label">Ghi_Chu:</label> 
+                <InputText id="ghi_chu" @bind-Value="DM_Kho.Ghi_Chu" class="form-control" /> 
+                <ValidationMessage For="() => DM_Kho.Ghi_Chu" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/dm_khos">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private DM_Kho DM_Kho { get; set; } = new();
+    private string errorMessage;
+
+    private async Task AddDM_Kho()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        // Kiểm tra xem tên kho đã tồn tại hay chưa
+        bool exists = await context.DM_Kho.AnyAsync(kho => kho.Ten_Kho == DM_Kho.Ten_Kho);
+        if (exists)
+        {
+            errorMessage = "Tên kho đã tồn tại. Vui lòng nhập tên khác.";
+            return; // Dừng lại nếu đã tồn tại
+        }
+
+        context.DM_Kho.Add(DM_Kho);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/dm_khos");
+    }
+}

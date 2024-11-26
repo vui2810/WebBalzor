@@ -1,0 +1,47 @@
+﻿@page "/donvitinhs/details"
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>DonViTinh</h2>
+    <hr />
+    @if (donvitinh is null)
+    {
+            <p><em>Loading...</em></p>
+    }
+    else
+    {
+            <dl class="row">
+                <dt class="col-sm-2">Ten_Don_Vi_Tinh</dt>
+                <dd class="col-sm-10">@donvitinh.Ten_Don_Vi_Tinh</dd>
+                <dt class="col-sm-2">Ghi_Chu</dt>
+                <dd class="col-sm-10">@donvitinh.Ghi_Chu</dd>
+            </dl>
+            <div>
+                <a href="@($"/donvitinhs/edit?id={donvitinh.Id}")">Edit</a> |
+                    <a href="@($"/donvitinhs")"btn btn-outline-secondary>Back to List</a>
+            </div>
+    }
+</div>
+
+@code {
+    private DonViTinh? donvitinh;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        donvitinh = await context.DonViTinh.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (donvitinh is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

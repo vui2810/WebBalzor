@@ -1,0 +1,87 @@
+﻿@page "/dm_khos/edit"
+
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit DM_Kho</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>DM_Kho</h2>
+<hr />
+@if (DM_Kho is null)
+{
+        <p><em>Loading...</em></p>
+}
+else
+{
+        <div class="row">
+            <div class="col-md-4">
+                <EditForm Model="DM_Kho" OnValidSubmit="UpdateDM_Kho" FormName="edit" Enhance>
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <input type="hidden" name="DM_Kho.Ten_Kho" value="@DM_Kho.Ten_Kho" />
+                    <div class="mb-3">
+                        <label for="ten_kho" class="form-label">Tên Kho:</label>
+                        <InputText id="ten_kho" @bind-Value="DM_Kho.Ten_Kho" class="form-control" />
+                        <ValidationMessage For="() => DM_Kho.Ten_Kho" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="ghi_chu" class="form-label">Ghi Chú:</label>
+                        <InputText id="ghi_chu" @bind-Value="DM_Kho.Ghi_Chu" class="form-control" />
+                        <ValidationMessage For="() => DM_Kho.Ghi_Chu" class="text-danger" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save</button> |
+                    <a href="/dm_khos" class="btn btn-outline-secondary">Back to List</a>
+                </EditForm>
+            </div>
+        </div>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    private string Ten_Kho { get; set; }
+
+    private DM_Kho? DM_Kho { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        DM_Kho = await context.DM_Kho.FirstOrDefaultAsync(m => m.Ten_Kho == Ten_Kho);
+
+        if (DM_Kho is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task UpdateDM_Kho()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(DM_Kho!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!DM_KhoExists(DM_Kho.Ten_Kho))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/dm_khos");
+    }
+
+    private bool DM_KhoExists(string ten_kho)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.DM_Kho.Any(e => e.Ten_Kho == ten_kho);
+    }
+}

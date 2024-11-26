@@ -1,0 +1,149 @@
+﻿@page "/dm_kho_users/khouser"
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3>Quản lý phân quyền kho</h3>
+
+<input @bind="newMaDangNhap" placeholder="Mã Đăng Nhập" writingsuggestions="on" />
+<InputNumber @bind-Value="newKhoID" placeholder="Kho ID" />
+<select @bind="newRole">
+    <option value="">Chọn quyền</option>
+    <option value="Admin">Admin</option>
+    <option value="User">User</option>
+</select>
+
+<button @onclick="AddKhoUser" disabled="@isSubmitting">Thêm</button>
+
+@if (!string.IsNullOrEmpty(message))
+{
+        <p>@message</p>
+}
+
+@if (khoUsers != null && khoUsers.Count > 0)
+{
+        <ul>
+        @foreach (var user in khoUsers)
+        {
+                    <li>@user.Ma_Dang_Nhap - @user.Kho_ID - @user.Role</li>
+        }
+        </ul>
+}
+
+@code {
+    private List<DM_Kho_User> khoUsers = new List<DM_Kho_User>();
+    private string newMaDangNhap;
+    private int newKhoID;
+    private string newRole;
+    private string message;
+    private bool isSubmitting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadKhoUsers();
+    }
+
+    private async Task LoadKhoUsers()
+    {
+        using (var context = CreateDbContext())
+        {
+            khoUsers = await context.DM_Kho_User.ToListAsync();
+            Console.WriteLine($"Tải {khoUsers.Count} người dùng từ cơ sở dữ liệu.");
+        }
+    }
+
+    private async Task<UserInfo> GetCurrentUser()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            return new UserInfo
+                {
+                    Role = user.FindFirst("role")?.Value
+                };
+        }
+
+        return null;
+    }
+
+    private async Task AddKhoUser()
+    {
+        isSubmitting = true;
+        Console.WriteLine("Nút Thêm đã được nhấn");
+
+        // Validate input
+        if (string.IsNullOrEmpty(newMaDangNhap) || newKhoID <= 0 || string.IsNullOrEmpty(newRole))
+        {
+            message = "Dữ liệu không hợp lệ!";
+            Console.WriteLine("Dữ liệu không hợp lệ");
+            isSubmitting = false;
+            return;
+        }
+
+        var currentUser = await GetCurrentUser();
+        Console.WriteLine($"Quyền của người dùng: {currentUser?.Role}");
+
+        // Check user role
+        if (currentUser == null || currentUser.Role != "Admin")
+        {
+            message = "Bạn không có quyền thực hiện thao tác này!";
+            Console.WriteLine("Người dùng không phải là admin");
+            isSubmitting = false;
+            return;
+        }
+
+        var newUser = new DM_Kho_User
+            {
+                Ma_Dang_Nhap = newMaDangNhap,
+                Kho_ID = newKhoID,
+                Role = newRole
+            };
+
+        try
+        {
+            using (var context = CreateDbContext())
+            {
+                context.DM_Kho_User.Add(newUser);
+                await context.SaveChangesAsync();
+                Console.WriteLine("Người dùng đã được thêm thành công vào cơ sở dữ liệu.");
+            }
+
+            khoUsers.Add(newUser);
+            message = "Thêm người dùng thành công!";
+            Console.WriteLine("Người dùng đã được thêm thành công");
+        }
+        catch (Exception ex)
+        {
+            HandleError(ex);
+        }
+        finally
+        {
+            isSubmitting = false; // Re-enable button
+        }
+
+        // Reset input fields
+        newMaDangNhap = string.Empty;
+        newKhoID = 0;
+        newRole = string.Empty;
+        StateHasChanged();
+    }
+
+    private void HandleError(Exception ex)
+    {
+        message = $"Đã xảy ra lỗi: {ex.Message}";
+        Console.WriteLine(message);
+    }
+
+    private MyAppDbContext CreateDbContext()
+    {
+        return DbFactory.CreateDbContext();
+    }
+
+    public class UserInfo
+    {
+        public string Role { get; set; }
+    }
+}

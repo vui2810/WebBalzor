@@ -1,0 +1,35 @@
+﻿@page "/loaisanphams"
+
+@implements IAsyncDisposable
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+
+<PageTitle>loại Sản Phẩm </PageTitle>
+
+<h1>Loại sản phẩm </h1>
+
+<p>
+    <a href="loaisanphams/create "class="btn btn-primary ">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.LoaiSanPham">
+        <PropertyColumn Property="loaisanpham => loaisanpham.Ma_LSP" />
+    <PropertyColumn Property="loaisanpham => loaisanpham.Ten_LSP" />
+    <PropertyColumn Property="loaisanpham => loaisanpham.Ghi_Chu" />
+
+    <TemplateColumn Context="loaisanpham">
+        <a href="@($"loaisanphams/edit?ma_lsp={loaisanpham.Ma_LSP}")"class="btn btn-info">Edit</a> |
+        <a href="@($"loaisanphams/details?ma_lsp={loaisanpham.Ma_LSP}")" class="btn btn-success">Details</a> |
+        <a href="@($"loaisanphams/delete?ma_lsp={loaisanpham.Ma_LSP}")" class="btn btn-danger">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private MyAppDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

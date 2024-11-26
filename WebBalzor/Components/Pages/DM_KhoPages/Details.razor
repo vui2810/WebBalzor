@@ -1,0 +1,45 @@
+﻿@page "/dm_khos/details"
+
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>DM_Kho</h2>
+    <hr />
+    @if (dm_kho is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Ghi_Chu</dt>
+            <dd class="col-sm-10">@dm_kho.Ghi_Chu</dd>
+        </dl>
+        <div>
+            <a href="@($"/dm_khos/edit?ten_kho={dm_kho.Ten_Kho}")">Edit</a> |
+                <a href="@($"/dm_khos")" class="btn btn-primary">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private DM_Kho? dm_kho;
+
+    [SupplyParameterFromQuery]
+    private string Ten_Kho { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        dm_kho = await context.DM_Kho.FirstOrDefaultAsync(m => m.Ten_Kho == Ten_Kho);
+
+        if (dm_kho is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

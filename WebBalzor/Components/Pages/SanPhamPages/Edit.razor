@@ -1,0 +1,101 @@
+﻿@page "/sanphams/edit"
+
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>SanPham</h2>
+<hr />
+@if (SanPham is null)
+{
+        <p><em>Loading...</em></p>
+}
+else
+{
+        <div class="row">
+            <div class="col-md-4">
+                <EditForm method="post" Model="SanPham" OnValidSubmit="UpdateSanPham" FormName="edit" Enhance>
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <input type="hidden" name="SanPham.Ma_San_Pham" value="@SanPham.Ma_San_Pham" />
+                    <div class="mb-3">
+                        <label for="ten_san_pham" class="form-label">Ten_San_Pham:</label>
+                        <InputText id="ten_san_pham" @bind-Value="SanPham.Ten_San_Pham" class="form-control" />
+                        <ValidationMessage For="() => SanPham.Ten_San_Pham" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="loai_san_pham_id" class="form-label">Loai_San_Pham_Id:</label>
+                        <InputText id="loai_san_pham_id" @bind-Value="SanPham.Loai_San_Pham_Id" class="form-control" />
+                        <ValidationMessage For="() => SanPham.Loai_San_Pham_Id" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="don_vi_tinh_id" class="form-label">Don_Vi_Tinh_ID:</label>
+                        <InputNumber id="don_vi_tinh_id" @bind-Value="SanPham.Don_Vi_Tinh_ID" class="form-control" />
+                        <ValidationMessage For="() => SanPham.Don_Vi_Tinh_ID" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="ghi_chu" class="form-label">Ghi_Chu:</label>
+                        <InputText id="ghi_chu" @bind-Value="SanPham.Ghi_Chu" class="form-control" />
+                        <ValidationMessage For="() => SanPham.Ghi_Chu" class="text-danger" />
+                    </div>
+                        <button type="submit" class="btn btn-primary">Save</button>|
+                    <a href="/sanphams"class="btn btn-outline-secondary">Back to List</a>
+                </EditForm>
+            </div>
+        </div>
+}
+
+
+@code {
+    [SupplyParameterFromQuery]
+    private string Ma_San_Pham { get; set; }
+
+    [SupplyParameterFromForm]
+    private SanPham? SanPham { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        SanPham ??= await context.SanPham.FirstOrDefaultAsync(m => m.Ma_San_Pham == Ma_San_Pham);
+
+        if (SanPham is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateSanPham()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(SanPham!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!SanPhamExists(SanPham!.Ma_San_Pham))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/sanphams");
+    }
+
+    private bool SanPhamExists(string ma_san_pham)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.SanPham.Any(e => e.Ma_San_Pham == ma_san_pham);
+    }
+}

@@ -1,0 +1,88 @@
+﻿@page "/loaisanphams/create"
+
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>LoaiSanPham</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+                    <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <EditForm Model="LoaiSanPham" OnValidSubmit="AddLoaiSanPham" FormName="create">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+
+            <div class="mb-3">
+                <label for="ma_lsp" class="form-label">Mã Loại Sản Phẩm:</label>
+                <InputText id="ma_lsp" @bind-Value="LoaiSanPham.Ma_LSP" class="form-control" />
+                <ValidationMessage For="() => LoaiSanPham.Ma_LSP" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="ten_lsp" class="form-label">Tên Loại Sản Phẩm:</label>
+                <InputText id="ten_lsp" @bind-Value="LoaiSanPham.Ten_LSP" class="form-control" /> 
+                <ValidationMessage For="() => LoaiSanPham.Ten_LSP" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="ghi_chu" class="form-label">Ghi Chú:</label>
+                <InputText id="ghi_chu" @bind-Value="LoaiSanPham.Ghi_Chu" class="form-control" /> 
+                <ValidationMessage For="() => LoaiSanPham.Ghi_Chu" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Tạo Mới</button> |
+            <a href="/loaisanphams" class="btn btn-outline-secondary">Quay Lại Danh Sách</a>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private LoaiSanPham LoaiSanPham { get; set; } = new();
+    private string? errorMessage;
+
+    private async Task AddLoaiSanPham()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        errorMessage = null;
+
+        // Kiểm tra nếu Ma_LSP là không rỗng
+        if (!string.IsNullOrWhiteSpace(LoaiSanPham.Ma_LSP))
+        {
+            var existingLoaiSanPhamByCode = await context.LoaiSanPham
+                .FirstOrDefaultAsync(l => l.Ma_LSP == LoaiSanPham.Ma_LSP);
+
+            if (existingLoaiSanPhamByCode != null)
+            {
+                errorMessage = "Mã loại sản phẩm đã tồn tại. Vui lòng nhập mã khác.";
+                return;
+            }
+        }
+        else
+        {
+            errorMessage = "Mã loại sản phẩm không hợp lệ.";
+            return;
+        }
+
+        // Kiểm tra tên
+        var existingLoaiSanPhamByName = await context.LoaiSanPham
+            .FirstOrDefaultAsync(l => l.Ten_LSP.ToLower() == LoaiSanPham.Ten_LSP.ToLower());
+
+        if (existingLoaiSanPhamByName != null)
+        {
+            errorMessage = "Tên loại sản phẩm đã tồn tại. Vui lòng nhập tên khác.";
+            return;
+        }
+
+        // Nếu không có trùng lặp, thêm mới
+        context.LoaiSanPham.Add(LoaiSanPham);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/loaisanphams");
+    }
+}

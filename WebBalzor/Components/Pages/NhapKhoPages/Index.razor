@@ -1,0 +1,35 @@
+﻿@page "/nhapkhos"
+@implements IAsyncDisposable
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Nhập Kho </h1>
+
+<p>
+    <a href="nhapkhos/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.DM_Nhap_Kho">
+    <PropertyColumn Property="nhapkho => nhapkho.Kho_ID" />
+    <PropertyColumn Property="nhapkho => nhapkho.NCC_ID" />
+    <PropertyColumn Property="nhapkho => nhapkho.Ngay_Nhap_Kho" />
+    <PropertyColumn Property="nhapkho => nhapkho.Ghi_Chu" />
+
+    <TemplateColumn Context="nhapkho">
+        <a href="@($"nhapkhos/edit?so_phieu_nhap_kho={nhapkho.So_Phieu_Nhap_Kho}")">Edit</a> |
+        <a href="@($"nhapkhos/details?so_phieu_nhap_kho={nhapkho.So_Phieu_Nhap_Kho}")">Details</a> |
+        <a href="@($"nhapkhos/delete?so_phieu_nhap_kho={nhapkho.So_Phieu_Nhap_Kho}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private MyAppDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

@@ -1,0 +1,122 @@
+﻿@page "/nhacungcaps/edit"
+
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit Nhà Cung Cấp</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Nhà Cung Cấp</h2>
+<hr />
+@if (NhaCungCap is null)
+{
+        <p><em>Loading...</em></p>
+}
+else
+{
+        <div class="row">
+            <div class="col-md-4">
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                        <div class="alert alert-danger">@errorMessage</div>
+            }
+                <EditForm Model="NhaCungCap" OnValidSubmit="UpdateNhaCungCap" FormName="editNhacungcap">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label for="ma_ncc" class="form-label">Mã Nhà Cung Cấp:</label>
+                        <InputNumber id="ma_ncc" @bind-Value="NhaCungCap.Ma_NCC" class="form-control" />
+                        <ValidationMessage For="() => NhaCungCap.Ma_NCC" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ten_ncc" class="form-label">Tên Nhà Cung Cấp:</label>
+                        <InputText id="ten_ncc" @bind-Value="NhaCungCap.Ten_NCC" class="form-control" />
+                        <ValidationMessage For="() => NhaCungCap.Ten_NCC" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ghi_chu" class="form-label">Ghi Chú:</label>
+                        <InputText id="ghi_chu" @bind-Value="NhaCungCap.Ghi_Chu" class="form-control" />
+                        <ValidationMessage For="() => NhaCungCap.Ghi_Chu" class="text-danger" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save</button> |
+                    <a href="/nhacungcaps" class="btn btn-outline-secondary">Back to List</a>
+                </EditForm>
+            </div>
+        </div>
+}
+
+@code {
+    private string? errorMessage;
+
+    [SupplyParameterFromQuery]
+    private string Ma_NCC { get; set; } = string.Empty;
+
+    [SupplyParameterFromForm]
+    private NhaCungCap? NhaCungCap { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        NhaCungCap ??= await context.NhaCungCap.FirstOrDefaultAsync(m => m.Ma_NCC.ToString() == Ma_NCC);
+
+        if (NhaCungCap is null)
+        {
+            NavigationManager.NavigateTo("/notfound");
+        }
+    }
+
+    private async Task UpdateNhaCungCap()
+    {
+        errorMessage = string.Empty;
+
+        using var context = DbFactory.CreateDbContext();
+
+        var existingNhaCungCapByCode = await context.NhaCungCap
+            .FirstOrDefaultAsync(n => n.Ma_NCC == NhaCungCap.Ma_NCC && n.Ma_NCC != NhaCungCap.Ma_NCC);
+
+        if (existingNhaCungCapByCode != null)
+        {
+            errorMessage = "Mã nhà cung cấp đã tồn tại. Vui lòng nhập mã khác.";
+            return;
+        }
+
+        var existingNhaCungCapByName = await context.NhaCungCap
+            .FirstOrDefaultAsync(n => n.Ten_NCC.ToLower() == NhaCungCap.Ten_NCC.ToLower() && n.Ma_NCC != NhaCungCap.Ma_NCC);
+
+        if (existingNhaCungCapByName != null)
+        {
+            errorMessage = "Tên nhà cung cấp đã tồn tại. Vui lòng nhập tên khác.";
+            return;
+        }
+
+        context.Attach(NhaCungCap!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+            NavigationManager.NavigateTo("/nhacungcaps");
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!NhaCungCapExists(NhaCungCap!.Ma_NCC))
+            {
+                NavigationManager.NavigateTo("/notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+    }
+
+    private bool NhaCungCapExists(int ma_ncc)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.NhaCungCap.Any(e => e.Ma_NCC == ma_ncc);
+    }
+}

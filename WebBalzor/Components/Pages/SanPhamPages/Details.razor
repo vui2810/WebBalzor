@@ -1,0 +1,52 @@
+﻿@page "/sanphams/details"
+
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>SanPham</h2>
+    <hr />
+    @if (sanpham is null)
+    {
+            <p><em>Loading...</em></p>
+    }
+    else
+    {
+            <dl class="row">
+                <dt class="col-sm-2">Ten_San_Pham</dt>
+                <dd class="col-sm-10">@sanpham.Ten_San_Pham</dd>
+                <dt class="col-sm-2">Loai_San_Pham_Id</dt>
+                <dd class="col-sm-10">@sanpham.Loai_San_Pham_Id</dd>
+                <dt class="col-sm-2">Don_Vi_Tinh_ID</dt>
+                <dd class="col-sm-10">@sanpham.Don_Vi_Tinh_ID</dd>
+                <dt class="col-sm-2">Ghi_Chu</dt>
+                <dd class="col-sm-10">@sanpham.Ghi_Chu</dd>
+            </dl>
+            <div>
+                <a href="@($"/sanphams/edit?ma_san_pham={sanpham.Ma_San_Pham}")">Edit</a> |
+                    <a href="@($"/sanphams")"class="btn btn-outline-secondary">Back to List</a>
+            </div>
+    }
+</div>
+
+@code {
+    private SanPham? sanpham;
+
+    [SupplyParameterFromQuery]
+    private string Ma_San_Pham { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        sanpham = await context.SanPham.FirstOrDefaultAsync(m => m.Ma_San_Pham == Ma_San_Pham);
+
+        if (sanpham is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

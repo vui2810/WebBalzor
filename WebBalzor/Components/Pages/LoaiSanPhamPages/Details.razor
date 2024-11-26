@@ -1,0 +1,48 @@
+﻿@page "/loaisanphams/details"
+
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>LoaiSanPham</h2>
+    <hr />
+    @if (loaisanpham is null)
+    {
+                <p><em>Loading...</em></p>
+    }
+    else
+    {
+                <dl class="row">
+                    <dt class="col-sm-2">Tên Loại Sản Phẩm</dt>
+                    <dd class="col-sm-10">@loaisanpham.Ten_LSP</dd>
+                    <dt class="col-sm-2">Ghi Chú</dt>
+                    <dd class="col-sm-10">@loaisanpham.Ghi_Chu</dd>
+                </dl>
+                <div>
+                    <a href="@($"/loaisanphams/edit?ma_lsp={loaisanpham.Ma_LSP}")">Edit</a> |
+                    <a href="/loaisanphams" class="btn btn-outline-secondary">Back to List</a>
+                </div>
+    }
+</div>
+
+@code {
+    private LoaiSanPham? loaisanpham;
+
+    [SupplyParameterFromQuery]
+    private string Ma_LSP { get; set; } = string.Empty; // Thay đổi kiểu từ int sang string
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        loaisanpham = await context.LoaiSanPham.FirstOrDefaultAsync(m => m.Ma_LSP == Ma_LSP);
+
+        if (loaisanpham is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

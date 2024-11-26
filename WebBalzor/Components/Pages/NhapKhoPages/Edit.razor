@@ -1,0 +1,104 @@
+﻿@page "/nhapkhos/edit"
+@using Microsoft.EntityFrameworkCore
+@using WebBalzor.Models
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>NhapKho</h2>
+<hr />
+@if (NhapKho is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="NhapKho" OnValidSubmit="UpdateNhapKho" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="NhapKho.So_Phieu_Nhap_Kho" value="@NhapKho.So_Phieu_Nhap_Kho" />
+                <div class="mb-3">
+                    <label for="kho_id" class="form-label">Kho_ID:</label>
+                    <InputNumber id="kho_id" @bind-Value="NhapKho.Kho_ID" class="form-control" />
+                    <ValidationMessage For="() => NhapKho.Kho_ID" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="ncc_id" class="form-label">NCC_ID:</label>
+                    <InputNumber id="ncc_id" @bind-Value="NhapKho.NCC_ID" class="form-control" />
+                    <ValidationMessage For="() => NhapKho.NCC_ID" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="ngay_nhap_kho" class="form-label">Ngay_Nhap_Kho:</label>
+                    <InputDate id="ngay_nhap_kho" @bind-Value="NhapKho.Ngay_Nhap_Kho" class="form-control" />
+                    <ValidationMessage For="() => NhapKho.Ngay_Nhap_Kho" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="ghi_chu" class="form-label">Ghi_Chu:</label>
+                    <InputText id="ghi_chu" @bind-Value="NhapKho.Ghi_Chu" class="form-control" />
+                    <ValidationMessage For="() => NhapKho.Ghi_Chu" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/nhapkhos">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private string So_Phieu_Nhap_Kho { get; set; }
+
+    [SupplyParameterFromForm]
+    private NhapKho? NhapKho { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        NhapKho ??= await context.DM_Nhap_Kho.FirstOrDefaultAsync(m => m.So_Phieu_Nhap_Kho == So_Phieu_Nhap_Kho);
+
+        if (NhapKho is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateNhapKho()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(NhapKho!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!NhapKhoExists(NhapKho!.So_Phieu_Nhap_Kho))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/nhapkhos");
+    }
+
+    private bool NhapKhoExists(string so_phieu_nhap_kho)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.DM_Nhap_Kho.Any(e => e.So_Phieu_Nhap_Kho == so_phieu_nhap_kho);
+    }
+}

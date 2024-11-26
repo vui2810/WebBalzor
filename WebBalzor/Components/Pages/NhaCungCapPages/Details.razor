@@ -1,0 +1,48 @@
+﻿@page "/nhacungcaps/details"
+@using Microsoft.EntityFrameworkCore
+@using Intenr.Models
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>NhaCungCap</h2>
+    <hr />
+    @if (nhacungcap is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Ten_NCC</dt>
+            <dd class="col-sm-10">@nhacungcap.Ten_NCC</dd>
+            <dt class="col-sm-2">Ghi_Chu</dt>
+            <dd class="col-sm-10">@nhacungcap.Ghi_Chu</dd>
+        </dl>
+        <div>
+            <a href="@($"/nhacungcaps/edit?ma_ncc={nhacungcap.Ma_NCC}")">Edit</a> |
+                <a href="@($"/nhacungcaps")"class="btn btn-outline-secondary">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private NhaCungCap? nhacungcap;
+
+    [SupplyParameterFromQuery]
+    private int Ma_NCC { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        nhacungcap = await context.NhaCungCap.FirstOrDefaultAsync(m => m.Ma_NCC == Ma_NCC);
+
+        if (nhacungcap is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

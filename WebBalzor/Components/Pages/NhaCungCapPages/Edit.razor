@@ -1,0 +1,118 @@
+﻿@page "/loaisanphams/edit"
+
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit Loại Sản Phẩm</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Loại Sản Phẩm</h2>
+<hr />
+@if (LoaiSanPham is null)
+{
+            <p><em>Loading...</em></p>
+}
+else
+{
+            <div class="row">
+                <div class="col-md-4">
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                                <div class="alert alert-danger">@errorMessage</div>
+            }
+                    <EditForm Model="LoaiSanPham" OnValidSubmit="UpdateLoaiSanPham" FormName="editLoaisanpham">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="mb-3">
+                            <label for="ma_lsp" class="form-label">Mã Loại Sản Phẩm:</label>
+                            <InputText id="ma_lsp" @bind-Value="LoaiSanPham.Ma_LSP" class="form-control" />
+                            <ValidationMessage For="() => LoaiSanPham.Ma_LSP" class="text-danger" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="ten_lsp" class="form-label">Tên Loại Sản Phẩm:</label>
+                            <InputText id="ten_lsp" @bind-Value="LoaiSanPham.Ten_LSP" class="form-control" />
+                            <ValidationMessage For="() => LoaiSanPham.Ten_LSP" class="text-danger" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="ghi_chu" class="form-label">Ghi Chú:</label>
+                            <InputText id="ghi_chu" @bind-Value="LoaiSanPham.Ghi_Chu" class="form-control" />
+                            <ValidationMessage For="() => LoaiSanPham.Ghi_Chu" class="text-danger" />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save</button> |
+                        <a href="/loaisanphams" class="btn btn-outline-secondary">Back to List</a>
+                    </EditForm>
+                </div>
+            </div>
+}
+
+@code {
+    private string? errorMessage;
+
+    [SupplyParameterFromQuery]
+    private string Ma_LSP { get; set; } = string.Empty;
+
+    [SupplyParameterFromForm]
+    private LoaiSanPham? LoaiSanPham { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        LoaiSanPham ??= await context.LoaiSanPham.FirstOrDefaultAsync(m => m.Ma_LSP == Ma_LSP);
+
+        if (LoaiSanPham is null)
+        {
+            NavigationManager.NavigateTo("/notfound");
+        }
+    }
+
+    private async Task UpdateLoaiSanPham()
+    {
+        errorMessage = string.Empty;
+
+        using var context = DbFactory.CreateDbContext();
+
+        var existingLoaiSanPhamByCode = await context.LoaiSanPham
+            .FirstOrDefaultAsync(l => l.Ma_LSP.ToLower() == LoaiSanPham.Ma_LSP.ToLower() && l.Ma_LSP != LoaiSanPham.Ma_LSP);
+
+        if (existingLoaiSanPhamByCode != null)
+        {
+            errorMessage = "Mã loại sản phẩm đã tồn tại. Vui lòng nhập mã khác.";
+            return;
+        }
+
+        var existingLoaiSanPhamByName = await context.LoaiSanPham
+            .FirstOrDefaultAsync(l => l.Ten_LSP.ToLower() == LoaiSanPham.Ten_LSP.ToLower() && l.Ma_LSP != LoaiSanPham.Ma_LSP);
+
+        if (existingLoaiSanPhamByName != null)
+        {
+            errorMessage = "Tên loại sản phẩm đã tồn tại. Vui lòng nhập tên khác.";
+            return;
+        }
+
+        context.Attach(LoaiSanPham!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+            NavigationManager.NavigateTo("/loaisanphams");
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!LoaiSanPhamExists(LoaiSanPham!.Ma_LSP))
+            {
+                NavigationManager.NavigateTo("/notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+    }
+
+    private bool LoaiSanPhamExists(string ma_lsp)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.LoaiSanPham.Any(e => e.Ma_LSP == ma_lsp);
+    }
+}

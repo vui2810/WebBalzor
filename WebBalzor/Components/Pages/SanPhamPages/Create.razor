@@ -1,0 +1,76 @@
+﻿@page "/sanphams/create"
+
+@inject IDbContextFactory<WebBalzor.Data.MyAppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>SanPham</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="SanPham" OnValidSubmit="AddSanPham" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                        <div class="text-danger">@errorMessage</div>
+            }
+            <div class="mb-3">
+                <label for="ma_san_pham" class="form-label">Ma_San_Pham:</label> 
+                <InputText id="ma_san_pham" @bind-Value="SanPham.Ma_San_Pham" class="form-control" /> 
+                <ValidationMessage For="() => SanPham.Ma_San_Pham" class="text-danger" /> 
+            </div> 
+            <div class="mb-3">
+                <label for="ten_san_pham" class="form-label">Ten_San_Pham:</label> 
+                <InputText id="ten_san_pham" @bind-Value="SanPham.Ten_San_Pham" class="form-control" /> 
+                <ValidationMessage For="() => SanPham.Ten_San_Pham" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="loai_san_pham_id" class="form-label">Loai_San_Pham_Id:</label> 
+                <InputText id="loai_san_pham_id" @bind-Value="SanPham.Loai_San_Pham_Id" class="form-control" /> 
+                <ValidationMessage For="() => SanPham.Loai_San_Pham_Id" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="don_vi_tinh_id" class="form-label">Don_Vi_Tinh_ID:</label> 
+                <InputNumber id="don_vi_tinh_id" @bind-Value="SanPham.Don_Vi_Tinh_ID" class="form-control" /> 
+                <ValidationMessage For="() => SanPham.Don_Vi_Tinh_ID" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="ghi_chu" class="form-label">Ghi_Chu:</label> 
+                <InputText id="ghi_chu" @bind-Value="SanPham.Ghi_Chu" class="form-control" /> 
+                <ValidationMessage For="() => SanPham.Ghi_Chu" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+            <a href="/sanphams" class="btn btn-outline-secondary">Back to List</a>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private SanPham SanPham { get; set; } = new();
+
+    private string errorMessage;
+
+    private async Task AddSanPham()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        // Kiểm tra xem mã sản phẩm đã tồn tại chưa
+        var existingSanPham = await context.SanPham
+            .FirstOrDefaultAsync(sp => sp.Ma_San_Pham == SanPham.Ma_San_Pham);
+
+        if (existingSanPham != null)
+        {
+            errorMessage = "Ma_San_Pham đã tồn tại. Vui lòng chọn mã khác.";
+            return;
+        }
+
+        context.SanPham.Add(SanPham);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/sanphams");
+    }
+}
